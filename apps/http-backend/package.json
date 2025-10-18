@@ -8,7 +8,9 @@
     "start": "node ./dist/index.js"
   },
   "dependencies": {
+    "@repo/db": "workspace:*",
     "@types/jsonwebtoken": "^9.0.10",
+    "bcryptjs": "^3.0.2",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2"
   },
@@ -18,7 +20,7 @@
     "@repo/typescript-config": "workspace:*",
     "@types/express": "^5.0.3"
   },
-  "keywords": [],
+  "keywords" : [],
   "author": "",
   "license": "ISC",
   "description": ""

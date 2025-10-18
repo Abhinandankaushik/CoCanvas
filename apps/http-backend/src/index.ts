@@ -3,25 +3,47 @@ import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "@repo/backend-common/config";
 import { middleware } from "./middleware";
 import { createUserSchema, SinginSchema, CreateRoomSchema } from "@repo/common/types"
+import { prismaClient } from "@repo/db/client";
+import bcryptjs from "bcryptjs"
 
 const app = express()
 
 
 
-app.post("/signup", (req, res) => {
+app.post("/signup", async (req, res) => {
 
-    const data = createUserSchema.safeParse(req.body)
+    const parsedData = createUserSchema.safeParse(req.body)
 
-    if (!data.success) {
-        return res.json({
+    if (!parsedData.success) {
+        res.json({
             message: "Incorrect inputs"
         })
+        return
     }
+    const hashedPassword = await bcryptjs.hash(parsedData.data.password, 10);
 
-    //db call
-    res.json({
-        userId: 123
-    })
+    try {
+        //db call
+        const user = await prismaClient.user.create({
+            data: {
+                email: parsedData.data?.username,
+                password: hashedPassword,
+                name: parsedData.data.name
+            }
+
+        })
+
+        res.json({
+            message: "User created Successfull",
+            userId: user.id,
+            userInDb: user
+        })
+    } catch (error) {
+
+        res.status(411).json({
+            message: "User already exist with this username"
+        })
+    }
 })
 
 
@@ -44,5 +66,5 @@ app.post("/room", middleware, (req, res) => {
     })
 })
 
-
+//Todo : add dynamic port number in .env
 app.listen(3001, () => console.log("express backend runnig"))
