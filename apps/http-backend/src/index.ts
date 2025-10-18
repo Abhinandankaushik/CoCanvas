@@ -9,11 +9,13 @@ import bcryptjs from "bcryptjs"
 const app = express()
 
 
+app.use(express.json())
 
 app.post("/signup", async (req, res) => {
 
     const parsedData = createUserSchema.safeParse(req.body)
 
+    console.log(parsedData)
     if (!parsedData.success) {
         res.json({
             message: "Incorrect inputs"
@@ -36,7 +38,6 @@ app.post("/signup", async (req, res) => {
         res.json({
             message: "User created Successfull",
             userId: user.id,
-            userInDb: user
         })
     } catch (error) {
 
@@ -47,24 +48,98 @@ app.post("/signup", async (req, res) => {
 })
 
 
-app.post("/signin", (req, res) => {
+app.post("/signin", async (req, res) => {
 
-    const userId = 1;
-    const token = jwt.sign({ userId }, JWT_SECRET);
+    const parseData = SinginSchema.safeParse(req.body)
 
-    res.json({
-        token
-    })
+    if (!parseData.success) {
+        res.json({
+            message: "Incorrect Inputs"
+        })
+        return
+    }
+
+    try {
+        const user = await prismaClient.user.findFirst({
+            where: {
+                email: parseData.data.username,
+            },
+            select: {
+                id: true,
+                email: true,
+                photo: true,
+                password: true
+            }
+        })
+
+        if (!user || !user.password) {
+            return res.status(401).json({ error: "Invalid credentials" });
+        }
+
+        const authenticatedUser = await bcryptjs.compare(
+            parseData.data.password,
+            user.password
+        );
+
+        if (!authenticatedUser) {
+            res.status(500).json({
+                message: "Invalid credentials"
+            })
+            return
+        }
+
+        const token = jwt.sign({
+            userId: user?.id
+        }, JWT_SECRET)
+
+        res.status(200).json({
+            token
+        })
+
+
+    } catch (error) {
+
+        res.status(401).json({
+            message: "Unknown error from catch"
+        })
+    }
 })
 
 
-app.post("/room", middleware, (req, res) => {
+app.post("/room", middleware, async (req, res) => {
 
-    //db call
-    res.json({
-        roomId: 123
-    })
+    const parseData = CreateRoomSchema.safeParse(req.body)
+
+    if (!parseData.success) {
+        res.json({
+            message: "Incorrect inputs"
+        })
+        return
+    }
+
+    try {
+        //@ts-ignore : TODO : Fix this 
+        const userId = req.userId
+        //db call
+
+        const room = await prismaClient.room.create({
+            data: {
+                slug: parseData.data.name,
+                adminId: userId
+            }
+        })
+
+        res.json({
+            roomId: room.id
+        })
+    } catch (error) {
+        res.status(411).json({
+            message: "Room already exist with this name"
+        })
+    }
 })
+
+app.get("/", (req, res) => res.send("hello from express backend"))
 
 //Todo : add dynamic port number in .env
 app.listen(3001, () => console.log("express backend runnig"))
