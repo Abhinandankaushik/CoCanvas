@@ -139,6 +139,26 @@ app.post("/room", middleware, async (req, res) => {
     }
 })
 
+
+app.get("/chats/:roomId", async (req, res) => {
+
+    const roomId = Number(req.params.roomId)
+
+    const messages = await prismaClient.chat.findMany({
+        where: {
+            roomId: roomId
+        },
+        orderBy: {
+            roomId: 'desc'
+        },
+        take: 50
+    })
+
+    res.json({
+        messages
+    })
+})
+
 app.get("/", (req, res) => res.send("hello from express backend"))
 
 //Todo : add dynamic port number in .env
