@@ -16,40 +16,31 @@ const ChatRoomClient = ({
     const [chats, setChats] = useState(messages)
     const [currentMsg, setCurrentMsg] = useState("")
     useEffect(() => {
-        if (!socket || loading) return;
 
-        // Join room once
-        socket.send(JSON.stringify({
-            type: "join_room",
-            roomId: id
-        }));
+        if (socket && !loading) {
+            socket.send(JSON.stringify({
+                type: "join_room",
+                roomId: id
+            }));
 
-        const handleMessage = (event: MessageEvent) => {
-            const parseData = JSON.parse(event.data);
-            if (parseData.type === "chat") {
-                setChats(c => [...c, parseData]);
+            socket.onmessage = (event) => {
+                const parseData = JSON.parse(event.data);
+                if (parseData.type === "chat") {
+                    setChats(c => [...c, parseData])
+                }
             }
-        };
+            socket.onclose = () => {
+                console.log("Connection closed ❌, retrying...");
+            };
 
-        socket.addEventListener("message", handleMessage);
+            socket.onerror = (err) => {
+                console.error("WebSocket error:", err);
+                socket.close();
+            };
+        }
 
-        const handleClose = () => console.log("Connection closed ❌, retrying...");
-        const handleError = (err: Event) => {
-            console.error("WebSocket error:", err);
-            socket.close();
-        };
 
-        socket.addEventListener("close", handleClose);
-        socket.addEventListener("error", handleError);
-
-        // Cleanup on unmount or socket change
-        return () => {
-            socket.removeEventListener("message", handleMessage);
-            socket.removeEventListener("close", handleClose);
-            socket.removeEventListener("error", handleError);
-        };
-    }, [socket, loading, id]);
-
+    }, [socket, loading, id])
 
 
     return (
