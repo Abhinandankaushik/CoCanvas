@@ -41,21 +41,20 @@ wss.on('connection', (socket, request) => {
         return;
     }
 
-    console.log("url is : ", url)
+   
 
     const queryParams = new URLSearchParams(url.split('?')[1]);
-    console.log("query params : ", queryParams)
-
+   
     const token = queryParams.get('token') ?? "";
-    console.log("token is : ", token)
-
+ 
     const userId = checkUser(token)
-    console.log("user id is : ", userId)
+  
 
     if (userId === null) {
         socket.close();
         return null;
     }
+
 
     users.push({
         rooms: [],
@@ -88,7 +87,8 @@ wss.on('connection', (socket, request) => {
         if (parseData.type === "chat") {
             const roomId = parseData.roomId;
             const message = parseData.message;
-
+          
+            console.log(message)
 
             await prismaClient.chat.create({
                 data: {
@@ -110,5 +110,7 @@ wss.on('connection', (socket, request) => {
         }
 
     })
+
+   
 
 })

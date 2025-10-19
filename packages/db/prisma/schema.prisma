@@ -28,10 +28,11 @@ model Room {
 }
 
 model Chat {
-  id      Int    @id @default(autoincrement())
-  message String
-  userId  String
-  roomId  Int
-  room    Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        Int      @id @default(autoincrement())
+  message   String
+  userId    String
+  roomId    Int
+  createdAt DateTime @default(now())
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
