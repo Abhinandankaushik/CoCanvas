@@ -14,14 +14,47 @@ export default function Canvas() {
 
             if (!ctx) return;
 
-            ctx.strokeRect(10, 10, 100, 100)
-        
+            let startX = 0;
+            let startY = 0;
+            let clicked = false;
+
+
+            canvas.addEventListener("mousedown", (e) => {
+                clicked = true;
+                startX = e.clientX
+                startY = e.clientY
+                console.log(`Starting from : X :${e.clientX} , Y :${e.clientY}`)
+            })
+            
+            canvas.addEventListener("mouseup", (e) => {
+                clicked = false;
+                console.log(`endin at : X :${e.clientX} , Y :${e.clientY}`)
+
+            })
+            
+            canvas.addEventListener("mousemove", (e) => {
+
+                if (clicked) {
+                    const width = e.clientX - startX
+                    const height = e.clientY - startY
+                    ctx.clearRect(0, 0, canvas.width, canvas.height)
+                    ctx.strokeRect(startX, startY, width, height)
+                }
+            })
+
+
+
+
         }
     }, [canvasRef])
 
     return (
         <div>
-            <canvas ref={canvasRef} className="w-[500px] h-[500px]"></canvas>
+            <canvas
+                ref={canvasRef}
+                width={800} height={800}
+            ></canvas>
+
         </div>
     )
 }
