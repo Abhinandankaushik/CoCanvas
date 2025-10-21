@@ -1,8 +1,7 @@
-import { WS_URL, BACKEND_URL } from "../../config"
+import {BACKEND_URL } from "../../config"
 import axios from "axios"
 import ChatRoom from "../../components/ChatRoom";
 async function getRoomId(slug: string) {
-    console.log("slug is #",slug)
     const res = await axios.get(`${BACKEND_URL}/room/${slug}`)
     return res.data.room.id;
 
