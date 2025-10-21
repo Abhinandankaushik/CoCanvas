@@ -5,11 +5,17 @@ import { middleware } from "./middleware";
 import { createUserSchema, SinginSchema, CreateRoomSchema } from "@repo/common/types"
 import { prismaClient } from "@repo/db/client";
 import bcryptjs from "bcryptjs"
+import cors from "cors"
 
 const app = express()
 
 
 app.use(express.json())
+
+
+app.use(cors({
+   origin: ["http://localhost:3002", "http://localhost:3000"]
+}));
 
 app.post("/signup", async (req, res) => {
 
@@ -184,4 +190,4 @@ app.get("/room/:slug", async (req, res) => {
 app.get("/", (req, res) => res.send("hello from express backend"))
 
 //Todo : add dynamic port number in .env
-app.listen(3001, () => console.log("express backend runnig"))
+app.listen(8000, () => console.log("express backend runnig "))

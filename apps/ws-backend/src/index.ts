@@ -5,7 +5,7 @@ import { prismaClient } from "@repo/db/client"
 const wss = new WebSocketServer({ port: 5000 })
 
 interface User {
-    rooms: string[],
+    rooms: String[],
     userId: string
     ws: WebSocket,
 }
@@ -41,14 +41,14 @@ wss.on('connection', (socket, request) => {
         return;
     }
 
-   
+
 
     const queryParams = new URLSearchParams(url.split('?')[1]);
-   
+
     const token = queryParams.get('token') ?? "";
- 
+
     const userId = checkUser(token)
-  
+
 
     if (userId === null) {
         socket.close();
@@ -87,13 +87,12 @@ wss.on('connection', (socket, request) => {
         if (parseData.type === "chat") {
             const roomId = parseData.roomId;
             const message = parseData.message;
-          
-            console.log(message)
 
+            console.log("message aaya :", message)
             await prismaClient.chat.create({
                 data: {
                     message,
-                    roomId,
+                    roomId: Number(roomId),
                     userId
                 }
             })
@@ -105,12 +104,13 @@ wss.on('connection', (socket, request) => {
                         message: message,
                         roomId
                     }))
+
                 }
             })
         }
 
     })
 
-   
+
 
 })
