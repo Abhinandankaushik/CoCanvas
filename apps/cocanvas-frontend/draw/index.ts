@@ -1,3 +1,5 @@
+//not removed it for later understanding for firstprincipal
+
 import { HTTP_BACKEND } from "@/config";
 import axios from "axios";
 type Shape = {
@@ -122,7 +124,6 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: string, socket
     })
 
 }
-
 
 function clearCanvas(existingShapes: Shape[], ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
