@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { WS_URL } from "@/config";
 import { Loader2 } from "lucide-react";
 import { Canvas } from "./Canvas";
@@ -8,6 +8,7 @@ const CanvasPage = ({ roomId }: { roomId: string }) => {
 
     const [socket, setSocket] = useState<WebSocket | null>(null)
     useEffect(() => {
+        console.log("creating new Socket connection")
         const ws = new WebSocket(`${WS_URL}?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3NzQ5Zjc1OC04ZTQ3LTQ0ZmEtOGI2YS00NTFkYThjOGM5ZDgiLCJpYXQiOjE3NjA4OTE4OTZ9.GEJESg_-hHqENU0uKHa5IZqP0bUU6x-v1PBfyP72G3M`)
 
         ws.onopen = () => {
@@ -18,7 +19,10 @@ const CanvasPage = ({ roomId }: { roomId: string }) => {
             }))
         }
 
-        
+        return () => {
+            console.log("closing previous connection")
+            socket?.close();
+        }
 
     }, [])
 

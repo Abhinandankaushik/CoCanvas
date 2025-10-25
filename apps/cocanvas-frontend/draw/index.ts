@@ -11,7 +11,13 @@ type Shape = {
     type: "circle";
     centerX: number;
     centerY: number;
-    radius: number
+    radius: number;
+} | {
+    type: "pencil"
+    startX: number;
+    startY: number;
+    endX: number;
+    endY: number
 }
 
 export async function initDraw(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
@@ -49,15 +55,35 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: string, socket
         clicked = false;
         const width = e.clientX - startX
         const height = e.clientY - startY
-        const shape: Shape = {
-            type: "rect",
-            x: startX,
-            y: startY,
-            height,
-            width
+
+        //@ts-ignore
+        const selectedTool = window.selectedTool
+        let shape: Shape | null = null;
+
+        if (selectedTool === "rect") {
+            shape = {
+                //@ts-ignore
+                type: window.selectedTool,
+                x: startX,
+                y: startY,
+                height,
+                width
+            }
+        } else if (selectedTool === "circle") {
+            const radius = Math.abs(Math.max(width, height)) / 2;
+            shape = {
+                //@ts-ignore
+                type: window.selectedTool,
+                radius: radius,
+                centerX: startX + width / 2,
+                centerY: startY + height / 2,
+            }
+
         }
 
+        if (!shape) return
         existingShapes.push(shape)
+
         socket.send(JSON.stringify({
             type: "chat",
             message: JSON.stringify(shape),
@@ -74,7 +100,24 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: string, socket
             const height = e.clientY - startY
             clearCanvas(existingShapes, ctx, canvas)
             ctx.strokeStyle = "rgba(255,255,255)"
-            ctx.strokeRect(startX, startY, width, height)
+
+            //@ts-ignore
+            const selectedTool = window.selectedTool
+
+            if (selectedTool === "rect") {
+                ctx.strokeRect(startX, startY, width, height)
+            } else if (selectedTool === "circle") {
+
+                const radius = Math.max(width, height) / 2;
+                const centerX = startX + width / 2;
+                const centerY = startY + height / 2;
+
+                ctx.beginPath()
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
+                ctx.stroke();
+                ctx.closePath();
+
+            }
         }
     })
 
@@ -90,6 +133,14 @@ function clearCanvas(existingShapes: Shape[], ctx: CanvasRenderingContext2D, can
         if (shape.type === "rect") {
             ctx.strokeStyle = "rgba(255,255,255)"
             ctx.strokeRect(shape.x, shape.y, shape.width, shape.height)
+        } else if (shape.type === "circle") {
+            if (shape.radius <= 0) return
+            ctx.strokeStyle = "rgba(255,255,255)"
+            ctx.beginPath()
+            ctx.arc(shape.centerX, shape.centerY, shape.radius, 0, Math.PI * 2)
+            ctx.stroke();
+            ctx.closePath();
+
         }
     })
 }
@@ -97,8 +148,7 @@ function clearCanvas(existingShapes: Shape[], ctx: CanvasRenderingContext2D, can
 async function getExistingShapes(roomId: String) {
 
     const res = await axios.get(`${HTTP_BACKEND}/chats/${roomId}`);
-    const messages = res.data.messages  
-    console.log(messages)
+    const messages = res.data.messages
 
     const shapes = messages.map((x: { message: string }) => {
         const messageData = JSON.parse(x.message)

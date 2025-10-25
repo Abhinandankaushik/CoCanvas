@@ -98,7 +98,7 @@ wss.on('connection', (socket, request) => {
             })
 
             users.forEach(user => {
-                if (user.rooms.includes(roomId)) {
+                if (user.rooms.includes(roomId) && user.ws !== socket) {
                     user.ws.send(JSON.stringify({
                         type: "chat",
                         message: message,
