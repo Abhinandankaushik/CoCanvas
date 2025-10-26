@@ -32,7 +32,7 @@ export class Game {
     private startX: number = 0;
     private startY: number = 0;
     private selectedTool: Tools;
-
+    private scaleFactor: number = 1;
     constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
         this.ctx = canvas.getContext("2d")!;
         this.canvas = canvas;
@@ -66,9 +66,11 @@ export class Game {
 
     clearCanvas() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0)
         this.ctx.fillStyle = "rgba(0,0,0)"
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
-
+        this.ctx.scale(this.scaleFactor, this.scaleFactor)
+        this.ctx.lineWidth = (1 / this.scaleFactor)
         this.existingShapes.map(shape => {
             if (shape.type === "rect") {
                 this.ctx.strokeStyle = "rgba(255,255,255)"
@@ -83,6 +85,7 @@ export class Game {
 
             }
         })
+
     }
 
     setTool(tool: Tools) {
@@ -96,8 +99,8 @@ export class Game {
     }
     mouseUpHandler(e: MouseEvent) {
         this.clicked = false;
-        const width = e.clientX - this.startX
-        const height = e.clientY - this.startY
+        const width = (e.clientX - this.startX)
+        const height = (e.clientY - this.startY)
 
         //@ts-ignore
         const selectedTool = this.selectedTool
@@ -108,20 +111,22 @@ export class Game {
             shape = {
                 //@ts-ignore
                 type: this.selectedTool,
-                x: this.startX,
-                y: this.startY,
-                height,
-                width
+                x: this.startX / this.scaleFactor,
+                y: this.startY / this.scaleFactor,
+                height: height / this.scaleFactor,
+                width: width / this.scaleFactor
             }
         } else if (selectedTool === "circle") {
-            const radius = Math.abs(Math.max(width, height) / 2);
+            const radius = Math.abs(Math.max(width, height) / 2) / this.scaleFactor;
+            const centerX = (this.startX + width / 2) / this.scaleFactor;
+            const centerY  = (this.startY + height / 2) / this.scaleFactor;
             //@ts-ignore
             shape = {
                 //@ts-ignore
                 type: this.selectedTool,
                 radius: radius,
-                centerX: this.startX + width / 2,
-                centerY: this.startY + height / 2,
+                centerX,
+                centerY,
             }
 
         }
@@ -136,9 +141,10 @@ export class Game {
         }))
     }
     mouseMoveHandler(e: MouseEvent) {
+
         if (this.clicked) {
-            const width = e.clientX - this.startX;
-            const height = e.clientY - this.startY;
+            const width = (e.clientX - this.startX) ;
+            const height = (e.clientY - this.startY) ;
             this.clearCanvas();
             this.ctx.strokeStyle = "rgba(255,255,255)";
 
@@ -146,12 +152,15 @@ export class Game {
             const selectedTool = this.selectedTool
 
             if (selectedTool === "rect") {
-                this.ctx.strokeRect(this.startX, this.startY, width, height)
+                this.ctx.beginPath();
+                this.ctx.rect(this.startX / this.scaleFactor, this.startY / this.scaleFactor, width/this.scaleFactor, height/this.scaleFactor)
+                // this.ctx.strokeRect(this.startX, this.startY, width, height)
+                this.ctx.stroke();
             } else if (selectedTool === "circle") {
 
-                const radius = Math.abs(Math.max(width, height) / 2);
-                const centerX = this.startX + width / 2;
-                const centerY = this.startY + height / 2;
+                const radius = Math.abs(Math.max(width, height) / 2)/this.scaleFactor;
+                const centerX = (this.startX + width / 2)/this.scaleFactor;
+                const centerY = (this.startY + height / 2)/this.scaleFactor;
 
                 this.ctx.beginPath()
                 this.ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
@@ -162,18 +171,30 @@ export class Game {
         }
     }
 
+    mouseZoomHandler(e: WheelEvent) { // if mouse wheel scroll zoomin means deltaY > 0 , zoomout < 0
+        const scale = 0.1;
+        e.preventDefault();
+        const zoom = e.deltaY > 0 ? 1 - scale : 1 + scale;
+        this.scaleFactor *= zoom;
+        this.clearCanvas();
+    }
+
+
     destroy() {
 
         this.canvas.removeEventListener("mousedown", this.mouseDownHandler.bind(this))
         this.canvas.removeEventListener("mouseup", this.mouseUpHandler.bind(this))
         this.canvas.removeEventListener("mousemove", this.mouseMoveHandler.bind(this))
+        this.canvas.removeEventListener("wheel", this.mouseZoomHandler.bind(this))
+
     }
+
     initMouseHandlers() {
 
         this.canvas.addEventListener("mousedown", this.mouseDownHandler.bind(this))
         this.canvas.addEventListener("mouseup", this.mouseUpHandler.bind(this))
         this.canvas.addEventListener("mousemove", this.mouseMoveHandler.bind(this))
-
+        this.canvas.addEventListener("wheel", this.mouseZoomHandler.bind(this))
     }
 
 
