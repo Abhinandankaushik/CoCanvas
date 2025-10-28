@@ -1,6 +1,7 @@
 import { Tools } from "@/app/util/Tools";
 import { getExistingShapes } from "./http";
 
+
 type Shape = {
     type: "rect";
     x: number;
@@ -33,6 +34,8 @@ export class Game {
     private startY: number = 0;
     private selectedTool: Tools;
     private scaleFactor: number = 1;
+    private grabButton: boolean = false;
+    private CtrlButton: boolean = false;
     constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
         this.ctx = canvas.getContext("2d")!;
         this.canvas = canvas;
@@ -119,7 +122,7 @@ export class Game {
         } else if (selectedTool === "circle") {
             const radius = Math.abs(Math.max(width, height) / 2) / this.scaleFactor;
             const centerX = (this.startX + width / 2) / this.scaleFactor;
-            const centerY  = (this.startY + height / 2) / this.scaleFactor;
+            const centerY = (this.startY + height / 2) / this.scaleFactor;
             //@ts-ignore
             shape = {
                 //@ts-ignore
@@ -143,8 +146,8 @@ export class Game {
     mouseMoveHandler(e: MouseEvent) {
 
         if (this.clicked) {
-            const width = (e.clientX - this.startX) ;
-            const height = (e.clientY - this.startY) ;
+            const width = (e.clientX - this.startX);
+            const height = (e.clientY - this.startY);
             this.clearCanvas();
             this.ctx.strokeStyle = "rgba(255,255,255)";
 
@@ -153,14 +156,14 @@ export class Game {
 
             if (selectedTool === "rect") {
                 this.ctx.beginPath();
-                this.ctx.rect(this.startX / this.scaleFactor, this.startY / this.scaleFactor, width/this.scaleFactor, height/this.scaleFactor)
+                this.ctx.rect(this.startX / this.scaleFactor, this.startY / this.scaleFactor, width / this.scaleFactor, height / this.scaleFactor)
                 // this.ctx.strokeRect(this.startX, this.startY, width, height)
                 this.ctx.stroke();
             } else if (selectedTool === "circle") {
 
-                const radius = Math.abs(Math.max(width, height) / 2)/this.scaleFactor;
-                const centerX = (this.startX + width / 2)/this.scaleFactor;
-                const centerY = (this.startY + height / 2)/this.scaleFactor;
+                const radius = Math.abs(Math.max(width, height) / 2) / this.scaleFactor;
+                const centerX = (this.startX + width / 2) / this.scaleFactor;
+                const centerY = (this.startY + height / 2) / this.scaleFactor;
 
                 this.ctx.beginPath()
                 this.ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
@@ -176,9 +179,28 @@ export class Game {
         e.preventDefault();
         const zoom = e.deltaY > 0 ? 1 - scale : 1 + scale;
         this.scaleFactor *= zoom;
-        this.clearCanvas();
+        if (this.CtrlButton) {
+            this.clearCanvas();
+        }
+
     }
 
+
+    keyDownHandler(e: KeyboardEvent) {
+        e.preventDefault();
+
+        if (e.ctrlKey) {
+            this.CtrlButton = true;
+        }
+        console.log("ctrl : ", this.CtrlButton)
+    }
+
+    keyUpHandler(e: KeyboardEvent) {
+        e.preventDefault()
+        console.log("ctrl : ", this.CtrlButton)
+        this.CtrlButton = false;
+        console.log("ctrl : ", this.CtrlButton)
+    }
 
     destroy() {
 
@@ -186,7 +208,8 @@ export class Game {
         this.canvas.removeEventListener("mouseup", this.mouseUpHandler.bind(this))
         this.canvas.removeEventListener("mousemove", this.mouseMoveHandler.bind(this))
         this.canvas.removeEventListener("wheel", this.mouseZoomHandler.bind(this))
-
+        document.removeEventListener("keydown", this.keyDownHandler.bind(this))
+        document.removeEventListener("keyup", this.keyUpHandler.bind(this))
     }
 
     initMouseHandlers() {
@@ -195,6 +218,10 @@ export class Game {
         this.canvas.addEventListener("mouseup", this.mouseUpHandler.bind(this))
         this.canvas.addEventListener("mousemove", this.mouseMoveHandler.bind(this))
         this.canvas.addEventListener("wheel", this.mouseZoomHandler.bind(this))
+        document.addEventListener("keydown", this.keyDownHandler.bind(this))
+        document.addEventListener("keyup", this.keyUpHandler.bind(this))
+
+
     }
 
 
